@@ -1,24 +1,20 @@
 package org.oop.service;
 
 import org.oop.api.IArticleService;
-import org.oop.api.ICommentService;
 import org.oop.api.IAuthService;
 import org.oop.api.dao.IArticleDao;
 import org.oop.di.Injector;
 import org.oop.model.Article;
-import org.oop.model.Comment;
 
 import java.util.List;
 
 public class ArticleService implements IArticleService {
     private final IArticleDao articleDao;
     private final IAuthService authService;
-    private final ICommentService commentService;
 
     public ArticleService() {
         this.articleDao = Injector.getInstance().getService(IArticleDao.class);
         this.authService = Injector.getInstance().getService(IAuthService.class);
-        this.commentService = Injector.getInstance().getService(ICommentService.class);
     }
 
     @Override
@@ -58,16 +54,5 @@ public class ArticleService implements IArticleService {
     @Override
     public boolean deleteArticle(long id) {
         return articleDao.deleteArticle(id);
-    }
-
-    @Override
-    public List<Comment> getCommentsByArticleId(int articleId) {
-        return commentService.getCommentsByArticleId(articleId);
-    }
-
-    @Override
-    public Comment addCommentToArticle(int articleId, String commentText) {
-        int userId = (int) authService.getCurrentUserId();
-        return commentService.createComment(articleId, userId, commentText);
     }
 }

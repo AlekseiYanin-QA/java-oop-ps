@@ -2,7 +2,6 @@ package org.oop.di;
 
 import org.oop.api.*;
 import org.oop.api.dao.IArticleDao;
-import org.oop.api.dao.ICommentDao;
 import org.oop.api.dao.IUserDao;
 import org.oop.dao.*;
 import org.oop.service.*;
@@ -29,19 +28,15 @@ public class Injector {
     private final Map<Class<?>, Object> serviceCache = new HashMap<>();
 
     private Injector() {
-        // Регистрация сервисов
         registerService(IAuthService.class, AuthService::new);
         registerService(IUserService.class, UserService::new);
         registerService(IOService.class, ConsoleIOService::new);
         registerService(IConfigService.class, ConfigService::new);
         registerService(IDatabaseService.class, DatabaseService::new);
         registerService(IArticleService.class, ArticleService::new);
-        registerService(ICommentService.class, CommentService::new); // Добавлено
 
-        // Регистрация DAO
         registerService(IUserDao.class, UserDao::new);
         registerService(IArticleDao.class, ArticleDao::new);
-        registerService(ICommentDao.class, CommentDao::new); // Добавлено
     }
 
     public <T> void registerService(Class<T> serviceType, Supplier<? extends T> factory) {
@@ -63,5 +58,7 @@ public class Injector {
 
             return service;
         }
+
+
     }
 }

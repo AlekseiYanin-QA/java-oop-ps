@@ -1,7 +1,6 @@
 package org.oop.api;
 
 import org.oop.model.Article;
-import org.oop.model.Comment;
 
 import java.util.List;
 
@@ -12,9 +11,5 @@ public interface IArticleService {
     List<Article> getAllArticles();
     boolean updateArticle(long id, String title, String content);
     boolean deleteArticle(long id);
-
-    List<Comment> getCommentsByArticleId(int articleId);
-
-    Comment addCommentToArticle(int articleId, String commentText);
 }
 
