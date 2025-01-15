@@ -19,8 +19,8 @@ public class Article {
     }
 
     // Геттеры
-    public Long getId() {
-        return this.id;
+    public int getId() {
+        return Math.toIntExact(this.id);
     }
 
     public String getTitle() {
