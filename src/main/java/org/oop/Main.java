@@ -1,5 +1,7 @@
 package org.oop;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -14,7 +16,7 @@ public class Main {
         scanner = new Scanner(System.in);
         D database = new D();
         database.initializeDatabase();
-        String choosenOption;
+        String chosenOption;
 
         while (true) {
             if (!isLoggedIn) {
@@ -23,8 +25,8 @@ public class Main {
                 System.out.println("2. Зарегистрироваться");
                 System.out.println("3. Выйти");
                 System.out.print("Выберите опцию: ");
-                choosenOption = scanner.nextLine();
-                switch (choosenOption) {
+                chosenOption = scanner.nextLine();
+                switch (chosenOption) {
                     case "1":
                         login(database);
                         break;
@@ -47,16 +49,30 @@ public class Main {
                 System.out.println("5. Добавить пользователя");
                 System.out.println("6. Удалить пользователя");
                 System.out.println("7. Изменить пароль пользователя");
-                System.out.println("8. Посмотреть всех пользователя");
+                System.out.println("8. Посмотреть всех пользователей");
                 System.out.println("9. Добавить статью");
                 System.out.println("10. Посмотреть все статьи");
                 System.out.println("11. Удалить статью");
                 System.out.println("12. Искать статью по заголовку");
-                System.out.println("13. Выйти");
+                System.out.println("13. Добавить комментарий");
+                System.out.println("14. Посмотреть комментарии");
+                System.out.println("15. Удалить комментарий");
+                System.out.println("16. Выйти");
                 System.out.print("Выберите опцию: ");
-                choosenOption = scanner.nextLine();
-                switch (choosenOption) {
-                    //... Previous Switch Cases Omitted ...
+                chosenOption = scanner.nextLine();
+                switch (chosenOption) {
+                    case "1":
+                        logout();
+                        break;
+                    case "2":
+                        createArticle(database);
+                        break;
+                    case "3":
+                        viewAllArticles(database);
+                        break;
+                    case "4":
+                        manageUsers(database);
+                        break;
                     case "5":
                         addUser(database);
                         break;
@@ -82,6 +98,15 @@ public class Main {
                         searchArticlesByTitle(database);
                         break;
                     case "13":
+                        addComment(database);
+                        break;
+                    case "14":
+                        viewComments(database);
+                        break;
+                    case "15":
+                        deleteComment(database);
+                        break;
+                    case "16":
                         System.exit(0);
                         break;
                     default:
@@ -102,34 +127,34 @@ public class Main {
     static int getChoice(List<String> options) {
         while (true) {
             try {
-                System.out.print("Enter option: ");
+                System.out.print("Введите опцию: ");
                 int choice = Integer.parseInt(scanner.nextLine());
                 if (choice >= 1 && choice <= options.size()) {
                     return choice;
                 } else {
-                    System.out.println("Invalid option. Try again.");
+                    System.out.println("Неверная опция. Попробуйте снова.");
                 }
             } catch (NumberFormatException ex) {
-                System.out.println("Invalid input. Try again.");
+                System.out.println("Неверный ввод. Попробуйте снова.");
             }
         }
     }
 
     static void login(D database) {
-        System.out.print("Enter username: ");
+        System.out.print("Введите имя пользователя: ");
         String username = scanner.nextLine();
-        System.out.print("Enter password: ");
+        System.out.print("Введите пароль: ");
         String password = scanner.nextLine();
 
         User user = database.gubu(username);
 
-        if (user != null && user.username.equals(username)) {
+        if (user != null && BCrypt.checkpw(password, user.password)) {
             isLoggedIn = true;
             loggedInUserId = user.id;
             isAdministrator = user.role == Role.ADMIN;
-            System.out.println("Logged in successfully.");
+            System.out.println("Успешный вход в систему.");
         } else {
-            System.out.println("Invalid credentials.");
+            System.out.println("Неверные учетные данные.");
         }
     }
 
@@ -137,65 +162,40 @@ public class Main {
         isLoggedIn = false;
         loggedInUserId = 0;
         isAdministrator = false;
-        System.out.println("Logged out.");
+        System.out.println("Вы вышли из системы.");
     }
 
     static void register(D database) {
-        System.out.print("Enter username: ");
+        System.out.print("Введите имя пользователя: ");
         String username = scanner.nextLine();
-        System.out.print("Enter password: ");
+        System.out.print("Введите пароль: ");
         String password = scanner.nextLine();
-        System.out.print("Enter email: ");
+        System.out.print("Введите email: ");
         String email = scanner.nextLine();
         Role role = Role.USER;
 
         User newUser = new User(0, username, password, email, role);
         if (database.cu(newUser) != null) {
-            System.out.println("Registered successfully.");
+            System.out.println("Регистрация прошла успешно.");
         } else {
-            System.out.println("Registration failed.");
+            System.out.println("Ошибка при регистрации.");
         }
     }
 
     static void createArticle(D database) {
-        System.out.print("Enter article title: ");
+        System.out.print("Введите заголовок статьи: ");
         String title = scanner.nextLine();
-        System.out.print("Enter article content: ");
+        System.out.print("Введите содержимое статьи: ");
         String content = scanner.nextLine();
 
         Article article = new Article(0L, title, content, loggedInUserId);
         if (database.ca(article) != null) {
-            System.out.println("Article created successfully.");
+            System.out.println("Статья успешно создана.");
         } else {
-            System.out.println("Failed to create article.");
+            System.out.println("Ошибка при создании статьи.");
         }
     }
 
-    static void viewArticles(D database) {
-        List<Article> articles = database.ga();
-        if (articles.isEmpty()) {
-            System.out.println("No articles found.");
-        } else {
-            for (Article article : articles) {
-                System.out.println("ID: " + article.id + ", Title: " + article.title);
-            }
-        }
-    }
-
-    static void deleteUser(long userId, D database) {
-        if (isAdministrator) {
-            boolean deleted = database.du((int) userId);
-            if (deleted) {
-                System.out.println("Пользователь удален.");
-            } else {
-                System.out.println("Не удалось удалить пользователя.");
-            }
-        } else {
-            System.out.println("Операция доступна только для администраторов.");
-        }
-    }
-
-    // Метод для просмотра всех статей
     static void viewAllArticles(D database) {
         List<Article> articles = database.ga();
         if (articles.isEmpty()) {
@@ -207,131 +207,173 @@ public class Main {
         }
     }
 
-    // Метод для добавления статьи
-    static void addArticle(String title, String content, D database) {
-        Article article = new Article(null, title, content, loggedInUserId);
-        Article addedArticle = database.ca(article);
-        if (addedArticle != null) {
-            System.out.println("Статья успешно добавлена.");
-        } else {
-            System.out.println("Не удалось добавить статью.");
-        }
-    }
-
-    // Метод для удаления статьи
-    static void removeArticle(long articleId, D database) {
-        boolean removed = database.da(articleId);
-        if (removed) {
-            System.out.println("Статья удалена.");
-        } else {
-            System.out.println("Не удалось удалить статью.");
-        }
-    }
-
-    static void changeUserRole(long userId, Role newRole, D database) {
-        if (isAdministrator) {
-            boolean updated = database.cur((int) userId, newRole);
-            if (updated) {
-                System.out.println("Роль пользователя изменена.");
-            } else {
-                System.out.println("Не удалось изменить роль пользователя.");
-            }
-        } else {
-            System.out.println("Операция доступна только для администраторов.");
-        }
-    }
-
-    static void changeUserPassword(long userId, String newPassword, D database) {
-        boolean updated = database.cp((int) userId, newPassword);
-        if (updated) {
-            System.out.println("Пароль пользователя изменен.");
-        } else {
-            System.out.println("Не удалось изменить пароль пользователя.");
-        }
-    }
-
-    static void manageUsers(D database) {
-        printMenu("User Management", Arrays.asList("Add User", "Change Password", "Delete User", "View All Users", "Go Back"));
-        int choice = getChoice(Arrays.asList("Add User", "Change Password", "Delete User", "View All Users", "Go Back"));
-        switch (choice) {
-            case 1:
-                addUser(database); // method name does not match action exactly
-                break;
-            case 2:
-                changeUserPassword(database); // method name does not match action exactly
-                break;
-            case 3:
-                deleteUser(database); // method name does not match action exactly
-                break;
-            case 4:
-                listAllUsers(database); // method name does not match action exactly
-                break;
-            case 5:
-                printMenu("Main Menu", Arrays.asList("Войти", "Зарегистрироваться", "Выйти")); // Incorrect menu for "Go Back"
-                break;
-        }
-    }
     static void addUser(D database) {
-        System.out.print("Имя пользователя: ");
-        String u = scanner.nextLine();
-        System.out.print("Пароль: ");
-        String p = scanner.nextLine();
-        System.out.print("Email: ");
-        String e = scanner.nextLine();
+        System.out.print("Введите имя пользователя: ");
+        String username = scanner.nextLine();
+        System.out.print("Введите пароль: ");
+        String password = scanner.nextLine();
+        System.out.print("Введите email: ");
+        String email = scanner.nextLine();
 
-        User aUser = new User(0, u, p, e, Role.USER);
-        if(database.cu(aUser) != null) System.out.println("Успешно добавлен!");
-        else System.out.println("Ошибка при добавлении пользователя.");
+        User newUser = new User(0, username, password, email, Role.USER);
+        if (database.cu(newUser) != null) {
+            System.out.println("Пользователь успешно добавлен.");
+        } else {
+            System.out.println("Ошибка при добавлении пользователя.");
+        }
     }
 
     static void deleteUser(D database) {
         System.out.print("Введите ID пользователя для удаления: ");
-        int i = Integer.parseInt(scanner.nextLine());
-        if(database.du(i)) System.out.println("Успешно удален!");
-        else System.out.println("Ошибка при удалении пользователя.");
+        int userId = Integer.parseInt(scanner.nextLine());
+        if (database.du(userId)) {
+            System.out.println("Пользователь успешно удален.");
+        } else {
+            System.out.println("Ошибка при удалении пользователя.");
+        }
     }
 
     static void changeUserPassword(D database) {
         System.out.print("Введите ID пользователя: ");
-        int id = Integer.parseInt(scanner.nextLine());
+        int userId = Integer.parseInt(scanner.nextLine());
         System.out.print("Введите новый пароль: ");
-        String np = scanner.nextLine();
-        if(database.cp(id, np)) System.out.println("Пароль изменен!");
-        else System.out.println("Ошибка при изменении пароля.");
+        String newPassword = scanner.nextLine();
+        if (database.cp(userId, newPassword)) {
+            System.out.println("Пароль успешно изменен.");
+        } else {
+            System.out.println("Ошибка при изменении пароля.");
+        }
     }
 
     static void listAllUsers(D database) {
-        List<User> allUsers = database.gau();
-        allUsers.forEach(u -> System.out.println("ID: " + u.id + ", Имя пользователя: " + u.username));
+        List<User> users = database.gau();
+        if (users.isEmpty()) {
+            System.out.println("Пользователи не найдены.");
+        } else {
+            for (User user : users) {
+                System.out.println("ID: " + user.id + ", Имя пользователя: " + user.username);
+            }
+        }
     }
 
     static void addArticle(D database) {
-        System.out.print("Введите название статьи: ");
-        String t = scanner.nextLine();
+        System.out.print("Введите заголовок статьи: ");
+        String title = scanner.nextLine();
         System.out.print("Введите содержимое статьи: ");
-        String c = scanner.nextLine();
+        String content = scanner.nextLine();
 
-        Article newArticle = new Article(0L, t, c, loggedInUserId);
-        if(database.ca(newArticle) != null) System.out.println("Статья добавлена!");
-        else System.out.println("Ошибка при добавлении статьи.");
+        Article article = new Article(0L, title, content, loggedInUserId);
+        if (database.ca(article) != null) {
+            System.out.println("Статья успешно добавлена.");
+        } else {
+            System.out.println("Ошибка при добавлении статьи.");
+        }
     }
 
     static void listAllArticles(D database) {
-        database.ga().forEach(a -> System.out.println("ID: " + a.id + ", Заголовок: " + a.title));
+        List<Article> articles = database.ga();
+        if (articles.isEmpty()) {
+            System.out.println("Статьи не найдены.");
+        } else {
+            for (Article article : articles) {
+                System.out.println("ID: " + article.id + ", Заголовок: " + article.title);
+            }
+        }
     }
 
     static void deleteArticle(D database) {
         System.out.print("Введите ID статьи для удаления: ");
-        Long id = Long.parseLong(scanner.nextLine());
-        if(database.da(id)) System.out.println("Статья удалена!");
-        else System.out.println("Ошибка при удалении статьи.");
+        long articleId = Long.parseLong(scanner.nextLine());
+        if (database.da(articleId)) {
+            System.out.println("Статья успешно удалена.");
+        } else {
+            System.out.println("Ошибка при удалении статьи.");
+        }
     }
 
     static void searchArticlesByTitle(D database) {
         System.out.print("Введите заголовок статьи для поиска: ");
         String title = scanner.nextLine();
-        List<Article> foundArticles = database.ga(title);
-        if (foundArticles.isEmpty()) System.out.println("Статьи не найдены.");
-        foundArticles.forEach(a -> System.out.println("ID: " + a.id + ", Заголовок: " + a.title));
+        List<Article> articles = database.ga(title);
+        if (articles.isEmpty()) {
+            System.out.println("Статьи не найдены.");
+        } else {
+            for (Article article : articles) {
+                System.out.println("ID: " + article.id + ", Заголовок: " + article.title);
+            }
+        }
+    }
+
+    static void addComment(D database) {
+        System.out.print("Введите ID статьи: ");
+        long articleId = Long.parseLong(scanner.nextLine());
+        System.out.print("Введите текст комментария: ");
+        String commentText = scanner.nextLine();
+
+        Comment comment = new Comment(null, articleId, loggedInUserId, commentText);
+        if (database.createComment(comment) != null) {
+            System.out.println("Комментарий успешно добавлен.");
+        } else {
+            System.out.println("Ошибка при добавлении комментария.");
+        }
+    }
+
+    static void viewComments(D database) {
+        System.out.print("Введите ID статьи: ");
+        long articleId = Long.parseLong(scanner.nextLine());
+        List<Comment> comments = database.getCommentsByArticleId(articleId);
+        if (comments.isEmpty()) {
+            System.out.println("Комментарии не найдены.");
+        } else {
+            for (Comment comment : comments) {
+                System.out.println(comment);
+            }
+        }
+    }
+
+    static void deleteComment(D database) {
+        System.out.print("Введите ID комментария для удаления: ");
+        long commentId = Long.parseLong(scanner.nextLine());
+        if (database.deleteComment(commentId)) {
+            System.out.println("Комментарий успешно удален.");
+        } else {
+            System.out.println("Ошибка при удалении комментария.");
+        }
+    }
+
+    static void manageUsers(D database) {
+        printMenu("Управление пользователями", Arrays.asList(
+                "Добавить пользователя",
+                "Изменить пароль пользователя",
+                "Удалить пользователя",
+                "Просмотреть всех пользователей",
+                "Вернуться в главное меню"
+        ));
+        int choice = getChoice(Arrays.asList(
+                "Добавить пользователя",
+                "Изменить пароль пользователя",
+                "Удалить пользователя",
+                "Просмотреть всех пользователей",
+                "Вернуться в главное меню"
+        ));
+        switch (choice) {
+            case 1:
+                addUser(database);
+                break;
+            case 2:
+                changeUserPassword(database);
+                break;
+            case 3:
+                deleteUser(database);
+                break;
+            case 4:
+                listAllUsers(database);
+                break;
+            case 5:
+                return; // Возврат в главное меню
+            default:
+                System.out.println("Неверная опция.");
+                break;
+        }
     }
 }

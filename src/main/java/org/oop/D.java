@@ -416,4 +416,82 @@ public class D {
         }
         return false;
     }
+    public Comment createComment(Comment comment) {
+        String query = "INSERT INTO comments (article_id, user_id, comment_text) VALUES (?, ?, ?)";
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+            preparedStatement.setLong(1, comment.articleId);
+            preparedStatement.setLong(2, comment.userId);
+            preparedStatement.setString(3, comment.commentText);
+
+            int affectedRows = preparedStatement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating comment failed, no rows affected.");
+            }
+
+            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    comment.id = generatedKeys.getLong(1);
+                } else {
+                    throw new SQLException("Creating comment failed, no ID obtained.");
+                }
+            }
+
+            return comment;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<Comment> getCommentsByArticleId(long articleId) {
+        List<Comment> comments = new ArrayList<>();
+        String query = "SELECT id, article_id, user_id, comment_text FROM comments WHERE article_id = ?";
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setLong(1, articleId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    comments.add(new Comment(
+                            resultSet.getLong("id"),
+                            resultSet.getLong("article_id"),
+                            resultSet.getLong("user_id"),
+                            resultSet.getString("comment_text")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return comments;
+    }
+
+    public boolean deleteComment(long commentId) {
+        String query = "DELETE FROM comments WHERE id = ?";
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setLong(1, commentId);
+            int affectedRows = preparedStatement.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
+
